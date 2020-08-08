@@ -1,0 +1,13 @@
+[package]
+name = "web-scaffolding-actix"
+version = "0.1.0"
+authors = ["Pader <ypnow@163.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "2"
+actix-rt = "1.0"
+tera = "1"
+chrono = "0.4.11"
