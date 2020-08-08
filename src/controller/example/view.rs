@@ -2,7 +2,7 @@ use actix_web::{web, Responder, get};
 use tera::{Tera, Context};
 use chrono::prelude::{DateTime, Local};
 
-use crate::base::template::render;
+use crate::base::view::render;
 
 /// 使用 tera 引擎的视图
 #[get("/view")]
@@ -16,4 +16,9 @@ pub async fn view(tmpl: web::Data<Tera>) -> impl Responder {
     context.insert("now", &f_now);
 
     render(&tmpl, "index.html", &context)
+}
+
+#[get("/about")]
+pub async fn about() -> impl Responder {
+    format!("This is <<About Me>> page.")
 }

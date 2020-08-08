@@ -1,1 +1,2 @@
-pub mod template;
+pub mod view;
+pub mod app;

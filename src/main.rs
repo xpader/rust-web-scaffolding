@@ -1,39 +1,41 @@
-use actix_web::{App, get, HttpServer, middleware, Responder, web};
+use actix_web::{App, HttpServer, middleware, web};
 use tera::Tera;
+
+use crate::base::app::get_app_config;
 
 mod base;
 mod controller;
 
-#[get("/about")]
-async fn about() -> impl Responder {
-    format!("This is <<About Me>> page.")
-}
-
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    let bind: &str = "0.0.0.0:8082";
+    //读取程序基础配置
+    let config = get_app_config();
 
-    println!("Start actix-web/2.0 on http://{}", bind);
+    println!("Start listen http://{}", config.listen);
 
     HttpServer::new(|| {
         //初始化 tera 模板引擎
-        let tera = match Tera::new("res/template/**/*.html") {
-            Ok(t) => t,
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                ::std::process::exit(1);
-            }
-        };
+        let tera = get_tera();
 
         App::new()
             .data(tera)
-            .wrap(middleware::DefaultHeaders::new().header("Server", "actix-web/2.0"))
+            .wrap(middleware::DefaultHeaders::new().header("Server", "Actix"))
             .route("/", web::get().to(controller::index::hello))
             .route("/t/{name}", web::get().to(controller::index::hello))
-            .service(about)
+            .service(controller::example::view::about)
             .service(controller::example::view::view)
     })
-        .bind(bind)?
+        .bind(&config.listen)?
         .run()
         .await
+}
+
+fn get_tera() -> Tera {
+    match Tera::new("res/template/**/*.html") {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            ::std::process::exit(1);
+        }
+    }
 }
