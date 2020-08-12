@@ -11,9 +11,10 @@ mod example;
 /// 具体参考：
 /// - https://actix.rs/docs/application/
 /// - https://actix.rs/docs/url-dispatch/
-pub fn scoped_config(cfg: &mut web::ServiceConfig) {
+pub fn config_routes(cfg: &mut web::ServiceConfig) {
     cfg.route("/", web::get().to(index::hello))
         .route("/t/{name}", web::get().to(index::hello))
         .service(example::view::about)
-        .service(example::view::view);
+        .service(example::view::view)
+        .service(example::state::state);
 }

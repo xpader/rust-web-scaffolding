@@ -1,19 +1,20 @@
 use std::fs::read_to_string;
 use std::process::exit;
-use std::path::PathBuf;
 
 use serde::Deserialize;
 use toml::de::Error;
 
-use actix_files::NamedFile;
-use actix_web::{HttpRequest, Result, get};
+use actix_files::{Files};
+use actix_web::{Result, web};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfig {
     pub listen: String
 }
 
-/// 读取 res/config/app.toml 中的配置
+/// 读取配置文件
+///
+/// 读取来自 res/config/app.toml 的配置文件
 pub fn get_app_config() -> AppConfig {
     let read = read_to_string("res/config/app.toml");
     match read {
@@ -40,9 +41,10 @@ pub fn get_app_config() -> AppConfig {
 ///
 /// 具体参考：
 /// - https://actix.rs/docs/static-files/
-#[get("/{filename:.*}")]
-pub async fn static_file(req: HttpRequest) -> Result<NamedFile> {
-    let path: PathBuf = req.match_info().query("filename").parse().unwrap();
-    println!("Static: {:?}", path);
-    Ok(NamedFile::open(path)?)
+pub fn config_static_dir(cfg: &mut web::ServiceConfig) {
+    cfg.service(
+        Files::new("/static", "static")
+            .use_etag(true)
+            // .show_files_listing()
+    );
 }
