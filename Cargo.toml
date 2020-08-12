@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 actix-web = "2"
 actix-rt = "1.0"
+actix-files = "0.2.2"
 tera = "1"
 chrono = "0.4.11"
 toml = "0.5.6"

@@ -1,7 +1,7 @@
-use actix_web::{App, HttpServer, middleware, web};
+use actix_web::{App, HttpServer, middleware};
 use tera::Tera;
 
-use crate::base::app::get_app_config;
+use crate::base::app::{get_app_config, static_file};
 
 mod base;
 mod controller;
@@ -20,10 +20,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .data(tera)
             .wrap(middleware::DefaultHeaders::new().header("Server", "Actix"))
-            .route("/", web::get().to(controller::index::hello))
-            .route("/t/{name}", web::get().to(controller::index::hello))
-            .service(controller::example::view::about)
-            .service(controller::example::view::view)
+            .configure(controller::scoped_config)
+            .service(static_file)
     })
         .bind(&config.listen)?
         .run()

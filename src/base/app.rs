@@ -1,8 +1,12 @@
 use std::fs::read_to_string;
 use std::process::exit;
+use std::path::PathBuf;
 
 use serde::Deserialize;
 use toml::de::Error;
+
+use actix_files::NamedFile;
+use actix_web::{HttpRequest, Result, get};
 
 #[derive(Deserialize)]
 pub struct AppConfig {
@@ -28,4 +32,17 @@ pub fn get_app_config() -> AppConfig {
             exit(1);
         }
     }
+}
+
+/// 静态文件控制器
+///
+/// 修改及控制静态文件路径及具体所在目录
+///
+/// 具体参考：
+/// - https://actix.rs/docs/static-files/
+#[get("/{filename:.*}")]
+pub async fn static_file(req: HttpRequest) -> Result<NamedFile> {
+    let path: PathBuf = req.match_info().query("filename").parse().unwrap();
+    println!("Static: {:?}", path);
+    Ok(NamedFile::open(path)?)
 }
