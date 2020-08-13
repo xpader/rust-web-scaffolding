@@ -1,11 +1,9 @@
 use std::fs::read_to_string;
-use std::process::exit;
 
-use serde::Deserialize;
-use toml::de::Error;
-
-use actix_files::{Files};
+use actix_files::Files;
 use actix_web::{Result, web};
+use serde::de::DeserializeOwned;
+use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct AppConfig {
@@ -16,22 +14,24 @@ pub struct AppConfig {
 ///
 /// 读取来自 res/config/app.toml 的配置文件
 pub fn get_app_config() -> AppConfig {
-    let read = read_to_string("res/config/app.toml");
-    match read {
+    read_config::<AppConfig>("app.toml").unwrap()
+}
+
+pub fn read_config<T>(filename: &str) -> Result<T, String>
+where
+    T: DeserializeOwned
+{
+    let tr = read_to_string(format!("res/config/{}", filename));
+    match tr {
         Ok(text) => {
-            let toml: Result<AppConfig, Error> = toml::from_str(text.as_str());
-            match toml {
-                Ok(v) => v,
-                Err(e) => {
-                    println!("配置解析失败： {}", e.to_string());
-                    exit(1);
-                }
+            let p = text.as_str();
+            let tt: Result<T, toml::de::Error> = toml::from_str(p);
+            match tt {
+                Ok(t) => Ok(t),
+                Err(e) => Err(e.to_string())
             }
         },
-        Err(e) => {
-            println!("读取配置文件失败： {}", e.to_string());
-            exit(1);
-        }
+        Err(e) => Err(e.to_string())
     }
 }
 
