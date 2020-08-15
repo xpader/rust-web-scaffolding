@@ -2,8 +2,7 @@ use std::fs::read_to_string;
 
 use actix_files::Files;
 use actix_web::{Result, web};
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, de::DeserializeOwned};
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct AppConfig {
