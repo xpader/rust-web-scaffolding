@@ -1,4 +1,4 @@
-use actix_web::{get, Responder, web::Data};
+use actix_web::{get, Responder, web::Data, HttpRequest};
 use serde::{Serialize, Deserialize};
 use crate::AppState;
 use crate::base::db::DbPool;
@@ -24,3 +24,23 @@ pub async fn query(state: Data<AppState>) -> impl Responder {
 
     format!("DB Query {:?}", result)
 }
+
+#[get("/db/view/{id}")]
+pub async fn view(req: HttpRequest, state: Data<AppState>) -> impl Responder {
+    let id = req.match_info().get("id").unwrap_or("0");
+    let id = id.parse::<u32>().unwrap();
+
+    let row = sqlx::query_as::<_, Posts>("SELECT * from posts WHERE id=?")
+        .bind(id)
+        .fetch_one(&state.db).await;
+
+    match row {
+        Ok(v) => {
+            format!("Get Row: {:?}", v)
+        },
+        Err(e) => {
+            format!("Error: {}", e)
+        }
+    }
+}
+

@@ -17,5 +17,7 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         .service(example::view::about)
         .service(example::view::view)
         .service(example::state::state)
-        .service(example::db::query);
+        .service(example::db::query)
+        .service(example::db::view)
+        ;
 }
