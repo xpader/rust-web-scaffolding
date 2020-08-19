@@ -1,26 +1,45 @@
-use actix_web::{App, HttpServer, middleware};
+use std::sync::Arc;
+
+use actix_web::{App, HttpServer, web::ServiceConfig};
 
 mod base;
 mod controller;
 
+type AppConfig = Arc<base::app::AppConfig>;
+
+pub struct AppState {
+    pub config: AppConfig,
+    pub db: base::db::DbPool
+}
+
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
-    //读取程序基础配置
-    let config = base::app::get_app_config();
-    let config_clone = config.clone();
 
-    println!("Start listen http://{}", config.listen);
+    //读取程序基础配置
+    let app_config = base::app::get_app_config();
+    let app_config = Arc::new(app_config);
+
+    let app_config_own = Arc::clone(&app_config);
+    println!("Start listen http://{}", app_config_own.listen);
+
+    println!("Create db pool.");
+    let pool = base::db::create_pool(&app_config.mysql.url).await;
 
     HttpServer::new(move || {
-        let config = config_clone.clone();
         App::new()
-            .data(config)
-            .wrap(middleware::DefaultHeaders::new().header("Server", "Actix"))
+            .data(AppState {
+                config: app_config.clone(),
+                db: pool.clone()
+            })
+            .wrap(base::app::scaffolding_wrap())
             .configure(controller::config_routes)
-            .configure(base::app::config_static_dir)
+            .configure(|cfg: &mut ServiceConfig| {
+                let config = app_config.clone();
+                base::app::config_static_dir(cfg, &config.static_map);
+            })
             .configure(base::view::config_tmpl_engine)
     })
-        .bind(&config.listen)?
+        .bind(&app_config_own.listen)?
         .run()
         .await
 }

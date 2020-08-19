@@ -16,5 +16,6 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         .route("/t/{name}", web::get().to(index::hello))
         .service(example::view::about)
         .service(example::view::view)
-        .service(example::state::state);
+        .service(example::state::state)
+        .service(example::db::query);
 }

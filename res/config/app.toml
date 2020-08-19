@@ -1,2 +1,19 @@
 # 服务监听地址及端口
 listen = "0.0.0.0:8082"
+
+[mysql]
+url = "mysql://rust:123456@192.168.4.2:3306/test"
+
+#
+# 静态文件路径映射
+#
+# path： 访问匹配前缀，如 /static 则获取 url.com/static
+# dir： 访问实地定位的相对或绝对目录，如 files 则代表 url.com/static/web.jpg 实际访问的是 files/web.jpg
+# allow_listing: 是否允许直接访问目录列出目录内的文件
+#
+# [[static_map]] 允许有多个设置
+#
+[[static_map]]
+path = "/static"
+dir = "static"
+allow_listing = false
