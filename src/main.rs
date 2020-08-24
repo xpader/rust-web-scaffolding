@@ -9,7 +9,9 @@ type AppConfig = Arc<base::app::AppConfig>;
 
 pub struct AppState {
     pub config: AppConfig,
-    pub db: base::db::DbPool
+    pub db: base::db::DbPool,
+    pub redis: deadpool_redis::Pool,
+    pub cache: base::cache::Cache
 }
 
 #[actix_rt::main]
@@ -25,11 +27,16 @@ async fn main() -> std::io::Result<()> {
     println!("Create db pool.");
     let pool = base::db::create_pool(&app_config.mysql.url).await;
 
+    println!("Create redis pool.");
+    let redis_pool = base::redis::create_pool(&app_config_own.redis);
+
     HttpServer::new(move || {
         App::new()
             .data(AppState {
                 config: app_config.clone(),
-                db: pool.clone()
+                db: pool.clone(),
+                redis: redis_pool.clone(),
+                cache: base::cache::Cache::new(redis_pool.clone())
             })
             .wrap(base::app::scaffolding_wrap())
             .configure(controller::config_routes)

@@ -4,6 +4,12 @@ listen = "0.0.0.0:8082"
 [mysql]
 url = "mysql://rust:123456@192.168.4.2:3306/test"
 
+[redis]
+url = "redis://192.168.4.2:6379/0"
+pool_max_size = 8
+pool_timeout_secs = 2
+pool_timeout_nanos = 0
+
 #
 # 静态文件路径映射
 #

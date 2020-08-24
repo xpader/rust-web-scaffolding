@@ -21,5 +21,7 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         .service(example::db::view)
         .service(example::db::add)
         .service(example::db::add_post)
+        .service(example::redis::getkey)
+        .service(example::redis::getcache)
         ;
 }

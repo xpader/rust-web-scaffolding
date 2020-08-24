@@ -18,10 +18,19 @@ pub struct MySql {
 }
 
 #[derive(Deserialize, Clone, Debug)]
+pub struct Redis {
+    pub url: String,
+    pub pool_max_size: Option<usize>,
+    pub pool_timeout_secs: Option<u64>,
+    pub pool_timeout_nanos: Option<u32>
+}
+
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfig {
     pub listen: String,
     pub static_map: Vec<StaticMap>,
-    pub mysql: MySql
+    pub mysql: MySql,
+    pub redis: Redis
 }
 
 /// 读取配置文件
