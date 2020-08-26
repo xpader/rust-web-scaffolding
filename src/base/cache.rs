@@ -1,6 +1,6 @@
-use serde::{Deserialize, de::DeserializeOwned};
-use redis::{FromRedisValue, RedisResult};
 use deadpool_redis::{cmd, Pool};
+use redis::{FromRedisValue, RedisResult};
+use serde::{de::DeserializeOwned, Deserialize};
 
 pub struct Cache {
     pool: Pool
@@ -43,6 +43,16 @@ impl Cache {
         match value {
             Ok(v) => Some(v),
             Err(_) => None
+        }
+    }
+
+}
+
+impl Clone for Cache {
+
+    fn clone(&self) -> Cache {
+        Cache {
+            pool: self.pool.clone()
         }
     }
 

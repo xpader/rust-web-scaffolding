@@ -30,13 +30,15 @@ async fn main() -> std::io::Result<()> {
     println!("Create redis pool.");
     let redis_pool = base::redis::create_pool(&app_config_own.redis);
 
+    let cache = base::cache::Cache::new(redis_pool.clone());
+
     HttpServer::new(move || {
         App::new()
             .data(AppState {
                 config: app_config.clone(),
                 db: pool.clone(),
                 redis: redis_pool.clone(),
-                cache: base::cache::Cache::new(redis_pool.clone())
+                cache: cache.clone()
             })
             .wrap(base::app::scaffolding_wrap())
             .configure(controller::config_routes)
