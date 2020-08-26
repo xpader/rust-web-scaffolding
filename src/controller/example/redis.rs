@@ -2,12 +2,13 @@ use actix_web::{get, Responder, web::Data};
 use deadpool_redis::cmd;
 use redis::RedisResult;
 use crate::AppState;
+use serde::{Serialize, Deserialize};
 
 #[get("/redis/get")]
 pub async fn getkey(state: Data<AppState>) -> impl Responder {
     let mut conn = state.redis.get().await.unwrap();
     let value: RedisResult<String> = cmd("GET")
-        .arg(&["hello_key"])
+        .arg(&["rusttest"])
         .query_async(&mut conn)
         .await;
     
@@ -19,15 +20,37 @@ pub async fn getkey(state: Data<AppState>) -> impl Responder {
 
 #[get("/redis/getcache")]
 pub async fn getcache(state: Data<AppState>) -> impl Responder {
-    let value = state.cache.get_or_default::<String>("test", "Test World".to_string()).await;
+    let value = state.cache.get::<Storage>("rusttest").await;
 
-
-    let v2 = state.cache.get("test2").await;
-
-    let v2 = match v2 {
-        Some(v) => v,
+    match value {
+        Some(v) => format!("rusttest is: {:?}", v),
         None => "No Value".to_string()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Storage {
+    key: u32,
+    name: String,
+    dist: bool
+}
+
+#[get("/redis/setcache")]
+pub async fn setcache(state: Data<AppState>) -> impl Responder {
+    let val = Storage {
+        key: 123,
+        name: String::from("Hello World"),
+        dist: true
     };
 
-    format!("test is: {}, test2 is: {}", value, v2)
+    state.cache.setex("rusttest", &val, 10).await;
+
+
+    let v2 = state.cache.get::<Storage>("rusttest").await;
+
+    match v2 {
+        Some(v) => format!("testset is: {:?}", v),
+        None => "No Value".to_string()
+    }
 }
+

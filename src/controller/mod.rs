@@ -24,5 +24,6 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         .service(example::db::show_soul)
         .service(example::redis::getkey)
         .service(example::redis::getcache)
+        .service(example::redis::setcache)
         ;
 }

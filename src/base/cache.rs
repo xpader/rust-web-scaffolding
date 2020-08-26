@@ -1,6 +1,6 @@
 use deadpool_redis::{cmd, Pool};
 use redis::{FromRedisValue, RedisResult};
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{de::DeserializeOwned, Serialize};
 
 pub struct Cache {
     pool: Pool
@@ -19,31 +19,60 @@ impl Cache {
         T: DeserializeOwned + std::marker::Send + FromRedisValue
     {
         let mut conn = self.pool.get().await.unwrap();
-        let value: RedisResult<T> = cmd("GET")
+        let value: RedisResult<String> = cmd("GET")
             .arg(&[key])
             .query_async(&mut conn)
             .await;
 
         match value {
-            Ok(v) => v,
+            Ok(v) => serde_json::from_str::<T>(v.as_str()).unwrap(),
             Err(_) => default_value
         }
     }
 
     pub async fn get<T>(&self, key: &str) -> Option<T>
     where
-        T: DeserializeOwned + std::marker::Send + FromRedisValue
+        T: DeserializeOwned + std::marker::Send
     {
         let mut conn = self.pool.get().await.unwrap();
-        let value: RedisResult<T> = cmd("GET")
+        let value: RedisResult<String> = cmd("GET")
             .arg(&[key])
             .query_async(&mut conn)
             .await;
 
         match value {
-            Ok(v) => Some(v),
+            Ok(v) => Some(serde_json::from_str::<T>(v.as_str()).unwrap()),
             Err(_) => None
         }
+    }
+
+    pub async fn set<T>(&self, key: &str, value: &T)
+    where
+        T: ?Sized + Serialize
+    {
+        let mut conn = self.pool.get().await.unwrap();
+
+        let sval = serde_json::to_string(value).unwrap();
+
+        cmd("SET").arg(&[key, &sval])
+            .execute_async(&mut conn)
+            .await.unwrap();
+    }
+
+    /// 设置有时效性的缓存
+    ///
+    /// 其中 `expires` 为有效时间秒数
+    pub async fn setex<T>(&self, key: &str, value: &T, expires: u32)
+    where
+        T: ?Sized + Serialize
+    {
+        let mut conn = self.pool.get().await.unwrap();
+
+        let sval = serde_json::to_string(value).unwrap();
+
+        cmd("SETEX").arg(&[key, expires.to_string().as_str(), &sval])
+            .execute_async(&mut conn)
+            .await.unwrap();
     }
 
 }
