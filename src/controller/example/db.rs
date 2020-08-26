@@ -1,13 +1,19 @@
-use actix_web::{get, post, Responder, web::{Data, Form}, HttpRequest};
-use serde::{Serialize, Deserialize};
-use crate::AppState;
-use crate::base::db::DbPool;
-use crate::base::view::render;
+use actix_web::{get, HttpRequest, post, Responder, web::{Data, Form}};
+use serde::{Deserialize, Serialize};
 // use chrono::DateTime;
-use sqlx::mysql::MySqlQueryAs;
-use tera::{Tera, Context};
+use sqlx::{mysql::MySqlQueryAs, FromRow};
+use tera::{Context, Tera};
 
-#[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
+use crate::{
+    AppState,
+    base::{
+        db::DbPool,
+        rand::gen_rand,
+        view::render
+    }
+};
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
 pub struct Posts {
     pub id: u32,
     pub title: String,
@@ -68,6 +74,25 @@ pub async fn add_post(state: Data<AppState>, data: Form<AddPost>) -> impl Respon
         },
         Err(e) => format!("Insert failed: {}", e)
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, FromRow)]
+pub struct Soul {
+    pub id: u32,
+    pub title: String,
+    pub hits: u32
+}
+
+#[get("/db/soul")]
+pub async fn show_soul(state: Data<AppState>, tmpl: Data<Tera>) -> impl Responder {
+    let count = sqlx::query_as::<_, (i32,)>("SELECT COUNT(*) AS count FROM `soul`").fetch_one(&state.db).await.unwrap().0;
+    let pos = gen_rand(0, (count-1) as usize) as u32;
+
+    let soul = sqlx::query_as::<_, Soul>("SELECT * FROM `soul` LIMIT 1 OFFSET ?").bind(pos).fetch_one(&state.db).await.unwrap();
+
+    let mut context = Context::new();
+    context.insert("soul", &soul);
+    render(&tmpl, "soul.html", &context)
 }
 
 async fn get_post(id: u32, pool: &DbPool) -> Result<Posts, sqlx::Error> {
