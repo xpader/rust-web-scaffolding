@@ -90,6 +90,9 @@ pub async fn show_soul(state: Data<AppState>, tmpl: Data<Tera>) -> impl Responde
 
     let soul = sqlx::query_as::<_, Soul>("SELECT * FROM `soul` LIMIT 1 OFFSET ?").bind(pos).fetch_one(&state.db).await.unwrap();
 
+    //更新命中次数
+    sqlx::query("UPDATE `soul` SET `hits`=`hits`+1 WHERE `id`=?").bind(soul.id).execute(&state.db).await.unwrap();
+
     let mut context = Context::new();
     context.insert("soul", &soul);
     render(&tmpl, "soul.html", &context)
