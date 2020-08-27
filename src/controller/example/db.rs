@@ -85,7 +85,17 @@ pub struct Soul {
 
 #[get("/db/soul")]
 pub async fn show_soul(state: Data<AppState>, tmpl: Data<Tera>) -> impl Responder {
-    let count = sqlx::query_as::<_, (i32,)>("SELECT COUNT(*) AS count FROM `soul`").fetch_one(&state.db).await.unwrap().0;
+    let key = "soul_count";
+
+    let count;
+
+    if let Some(v) = state.cache.get::<u32>(key).await {
+        count = v;
+    } else {
+        count = sqlx::query_as::<_, (i32,)>("SELECT COUNT(*) AS count FROM `soul`").fetch_one(&state.db).await.unwrap().0 as u32;
+        state.cache.setex(key, &count, 600).await;
+    }
+
     let pos = gen_rand(0, (count-1) as usize) as u32;
 
     let soul = sqlx::query_as::<_, Soul>("SELECT * FROM `soul` LIMIT 1 OFFSET ?").bind(pos).fetch_one(&state.db).await.unwrap();
